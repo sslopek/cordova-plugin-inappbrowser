@@ -26,6 +26,7 @@ import android.provider.Browser;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -48,6 +49,9 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.net.Uri; 
+import android.webkit.DownloadListener;
+import android.app.ProgressDialog;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.Config;
@@ -84,6 +88,10 @@ public class InAppBrowser extends CordovaPlugin {
     private static final String CLEAR_SESSION_CACHE = "clearsessioncache";
     private static final String HARDWARE_BACK_BUTTON = "hardwareback";
 
+	private static final String COLOR_STATUSBAR = "#5E0003";
+	private static final String COLOR_ACTIONBAR = "#840029";
+
+	
     private InAppBrowserDialog dialog;
     private WebView inAppWebView;
     private EditText edittext;
@@ -442,6 +450,16 @@ public class InAppBrowser extends CordovaPlugin {
         } else {
             this.inAppWebView.loadUrl(url);
         }
+		
+		//enable downloads
+		this.inAppWebView.setDownloadListener(new DownloadListener() {
+			public void onDownloadStart(String url, String userAgent, String contentDisposition, String mimetype, long contentLength) {
+			  Intent i = new Intent(Intent.ACTION_VIEW);
+			  i.setData(Uri.parse(url));
+			  cordova.getActivity().startActivity(i);
+			}
+		});
+		
         this.inAppWebView.requestFocus();
     }
 
@@ -521,6 +539,8 @@ public class InAppBrowser extends CordovaPlugin {
                 // Let's create the main dialog
                 dialog = new InAppBrowserDialog(cordova.getActivity(), android.R.style.Theme_NoTitleBar);
                 dialog.getWindow().getAttributes().windowAnimations = android.R.style.Animation_Dialog;
+				
+
                 dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
                 dialog.setCancelable(true);
                 dialog.setInAppBroswer(getInAppBrowser());
@@ -531,10 +551,10 @@ public class InAppBrowser extends CordovaPlugin {
 
                 // Toolbar layout
                 RelativeLayout toolbar = new RelativeLayout(cordova.getActivity());
-                //Please, no more black!
-                toolbar.setBackgroundColor(android.graphics.Color.LTGRAY);
-                toolbar.setLayoutParams(new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT, this.dpToPixels(44)));
-                toolbar.setPadding(this.dpToPixels(2), this.dpToPixels(2), this.dpToPixels(2), this.dpToPixels(2));
+
+                toolbar.setBackgroundColor(Color.parseColor(COLOR_ACTIONBAR));
+                toolbar.setLayoutParams(new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT, this.dpToPixels(55)));
+                toolbar.setPadding(this.dpToPixels(4), this.dpToPixels(4), this.dpToPixels(4), this.dpToPixels(4));
                 toolbar.setHorizontalGravity(Gravity.LEFT);
                 toolbar.setVerticalGravity(Gravity.TOP);
 
@@ -641,7 +661,26 @@ public class InAppBrowser extends CordovaPlugin {
                 // WebView
                 inAppWebView = new WebView(cordova.getActivity());
                 inAppWebView.setLayoutParams(new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
-                inAppWebView.setWebChromeClient(new InAppChromeClient(thatWebView));
+                
+
+				
+				final ProgressDialog progressDialog = new ProgressDialog(cordova.getActivity());
+				progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+				progressDialog.setCancelable(false);
+				
+				inAppWebView.setWebChromeClient(new InAppChromeClient(thatWebView){
+					
+					public void onProgressChanged(WebView view, int progress) {
+						progressDialog.show();
+						progressDialog.setProgress(0);
+						progressDialog.incrementProgressBy(progress);
+						if(progress == 100 && progressDialog.isShowing())
+							progressDialog.dismiss();
+					}
+
+				});
+				
+
                 WebViewClient client = new InAppBrowserClient(thatWebView, edittext);
                 inAppWebView.setWebViewClient(client);
                 WebSettings settings = inAppWebView.getSettings();
@@ -665,6 +704,16 @@ public class InAppBrowser extends CordovaPlugin {
                 } else if (clearSessionCache) {
                     CookieManager.getInstance().removeSessionCookie();
                 }
+				
+				
+				//enable downloads
+				inAppWebView.setDownloadListener(new DownloadListener() {
+					public void onDownloadStart(String url, String userAgent, String contentDisposition, String mimetype, long contentLength) {
+					  Intent i = new Intent(Intent.ACTION_VIEW);
+					  i.setData(Uri.parse(url));
+					  cordova.getActivity().startActivity(i);
+					}
+				});
 
                 inAppWebView.loadUrl(url);
                 inAppWebView.setId(6);
@@ -704,6 +753,24 @@ public class InAppBrowser extends CordovaPlugin {
                 if(openWindowHidden) {
                     dialog.hide();
                 }
+				
+				
+				
+				
+				//Change statusbar color (code modified from statusbar plugin)
+				final Window window = dialog.getWindow();
+				try {
+                    // Using reflection makes sure any 5.0+ device will work without having to compile with SDK level 21
+                    window.getClass().getDeclaredMethod("setStatusBarColor", int.class).invoke(window, Color.parseColor(COLOR_STATUSBAR));
+                } catch (IllegalArgumentException ignore) {
+                    Log.e(LOG_TAG, "Invalid hexString argument, use f.i. '#999999'");
+                } catch (Exception ignore) {
+                    // this should not happen, only in case Android removes this method in a version > 21
+                    Log.w(LOG_TAG, "Method window.setStatusBarColor not found for SDK level " + Build.VERSION.SDK_INT);
+                }
+				
+				
+
             }
         };
         this.cordova.getActivity().runOnUiThread(runnable);
