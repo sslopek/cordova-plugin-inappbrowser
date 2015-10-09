@@ -51,7 +51,7 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.net.Uri; 
 import android.webkit.DownloadListener;
-import android.app.ProgressDialog;
+import android.widget.ProgressBar;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.Config;
@@ -658,25 +658,30 @@ public class InAppBrowser extends CordovaPlugin {
                     }
                 });
 
+				
+
+				final ProgressBar progressBar = new ProgressBar(cordova.getActivity(), null, android.R.attr.progressBarStyleHorizontal);
+                progressBar.setLayoutParams(new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, 10));
+                progressBar.setId(7);
+
+				
+
+				
                 // WebView
                 inAppWebView = new WebView(cordova.getActivity());
                 inAppWebView.setLayoutParams(new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
                 
-
-				
-				final ProgressDialog progressDialog = new ProgressDialog(cordova.getActivity());
-				progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-				progressDialog.setCancelable(false);
-				
 				inAppWebView.setWebChromeClient(new InAppChromeClient(thatWebView){
 					
 					public void onProgressChanged(WebView view, int progress) {
-						progressDialog.show();
-						progressDialog.setProgress(0);
-						progressDialog.incrementProgressBy(progress);
-						if(progress == 100 && progressDialog.isShowing())
-							progressDialog.dismiss();
+						progressBar.setProgress(progress);
+						
+						if(progress == 100)
+							progressBar.setVisibility(View.GONE);
+						else
+							progressBar.setVisibility(View.VISIBLE);
 					}
+									
 
 				});
 				
@@ -737,6 +742,9 @@ public class InAppBrowser extends CordovaPlugin {
                     main.addView(toolbar);
                 }
 
+				
+				main.addView(progressBar);
+				
                 // Add our webview to our main view/layout
                 main.addView(inAppWebView);
 
