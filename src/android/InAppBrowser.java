@@ -88,7 +88,7 @@ public class InAppBrowser extends CordovaPlugin {
     private static final String CLEAR_SESSION_CACHE = "clearsessioncache";
     private static final String HARDWARE_BACK_BUTTON = "hardwareback";
 
-	private static final String COLOR_STATUSBAR = "#5E0003";
+	//private static final String COLOR_STATUSBAR = "#5E0003"; //todo
 	private static final String COLOR_ACTIONBAR = "#840029";
 
 	
@@ -743,6 +743,7 @@ public class InAppBrowser extends CordovaPlugin {
                 }
 
 				
+				// Add progressbar
 				main.addView(progressBar);
 				
                 // Add our webview to our main view/layout
@@ -761,23 +762,6 @@ public class InAppBrowser extends CordovaPlugin {
                 if(openWindowHidden) {
                     dialog.hide();
                 }
-				
-				
-				
-				
-				//Change statusbar color (code modified from statusbar plugin)
-				final Window window = dialog.getWindow();
-				try {
-                    // Using reflection makes sure any 5.0+ device will work without having to compile with SDK level 21
-                    window.getClass().getDeclaredMethod("setStatusBarColor", int.class).invoke(window, Color.parseColor(COLOR_STATUSBAR));
-                } catch (IllegalArgumentException ignore) {
-                    Log.e(LOG_TAG, "Invalid hexString argument, use f.i. '#999999'");
-                } catch (Exception ignore) {
-                    // this should not happen, only in case Android removes this method in a version > 21
-                    Log.w(LOG_TAG, "Method window.setStatusBarColor not found for SDK level " + Build.VERSION.SDK_INT);
-                }
-				
-				
 
             }
         };
