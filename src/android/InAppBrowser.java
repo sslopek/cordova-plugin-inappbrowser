@@ -674,7 +674,7 @@ public class InAppBrowser extends CordovaPlugin {
 
 				final ProgressBar progressBar = new ProgressBar(cordova.getActivity(), null, android.R.attr.progressBarStyleHorizontal);
                 progressBar.setLayoutParams(new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, 10));
-                progressBar.setId(7);
+                progressBar.setId(Integer.valueOf(7));
 
 				
 
